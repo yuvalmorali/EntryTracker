@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  entrytracker:
+    build: .
+    container_name: entrytracker-app
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    depends_on:
+      - mysql-db
+    networks:
+      - entrytracker-network
+
+  mysql-db:
+    image: mysql:5.7
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - entrytracker-network
+
+networks:
+  entrytracker-network:
+
+volumes:
+  mysql-data:
