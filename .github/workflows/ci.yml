@@ -71,7 +71,7 @@ jobs:
         if: always()
         run: |
           docker compose down
-    # Part 6: Push to AWS ECR (CD)
+    # Part 6: Push to AWS ECR
       - name: Configure AWS credentials with OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
