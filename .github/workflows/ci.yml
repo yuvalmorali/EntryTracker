@@ -5,6 +5,11 @@ on:
     branches: [master]
   pull_request:
     branches: [master]  
+
+permissions:
+  id-token: write
+  contents: read
+  
 jobs:
   ci:
     runs-on: ubuntu-latest
@@ -66,5 +71,19 @@ jobs:
         if: always()
         run: |
           docker compose down
+    # Part 6: Push to AWS ECR (CD)
+      - name: Configure AWS credentials with OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
 
-        
+      - name: Login to Amazon ECR Public
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: Tag and push Docker image to ECR Public
+        run: |
+          docker tag entrytracker:latest public.ecr.aws/d2x7s4g6/entrytracker:latest
+          docker push public.ecr.aws/d2x7s4g6/entrytracker:latest
