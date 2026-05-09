@@ -87,3 +87,34 @@ jobs:
         run: |
           docker tag entrytracker:latest public.ecr.aws/d2x7s4g6/entrytracker:latest
           docker push public.ecr.aws/d2x7s4g6/entrytracker:latest
+
+
+      # Deploy to EC2
+
+      - name: Get EC2 public IPs by tag
+        id: ec2
+        run: |
+          IPS=$(aws ec2 describe-instances \
+            --region ap-south-1 \
+            --filters "Name=tag:App,Values=EntryTracker" "Name=instance-state-name,Values=running" \
+            --query "Reservations[].Instances[].PublicIpAddress" \
+            --output text)
+
+          echo "ips=$IPS" >> $GITHUB_OUTPUT
+
+      - name: Deploy to all EntryTracker EC2 instances
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key.pem
+          chmod 600 ~/.ssh/ec2_key.pem
+
+          for IP in ${{ steps.ec2.outputs.ips }}; do
+            echo "Deploying to $IP"
+
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem ubuntu@$IP << 'EOF'
+              cd ~/entrytracker
+              docker compose pull entrytracker
+              docker compose up -d --no-deps --force-recreate entrytracker
+              docker image prune -f
+          EOF
+          done  
