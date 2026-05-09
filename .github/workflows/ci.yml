@@ -29,15 +29,23 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-       
+    #Part 3: Run unit tests
       - name: Run Flask app in background
         run: |
           python app.py &
-    #Part 3: Run unit tests
+          echo $! > flask.pid
+
       - name: run health check
         run: |
           sleep 5
           curl --fail http://localhost:5000/ || exit 1
+
+      - name: Stop standalone Flask app
+        if: always()
+        run: |
+          if [ -f flask.pid ]; then
+            kill $(cat flask.pid) || true
+          fi
 
     #Part 4:Package the application
       - name: Build Docker image
