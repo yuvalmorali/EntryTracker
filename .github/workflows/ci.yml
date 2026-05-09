@@ -47,7 +47,7 @@ jobs:
     #Part 5: Run end-to-end (E2E) tests
       - name: Run docker compose
         run: |
-          docker-compose up --build --abort-on-container-exit -d
+          docker compose up --build -d
 
       - name: Run E2E tests
         run: |
