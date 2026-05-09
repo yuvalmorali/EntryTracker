@@ -16,9 +16,10 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: app_db
     steps:
+    # Part 1: Pull the application source code
       - name: Checkout source code
         uses: actions/checkout@v4
-
+    #Part 2: Build the application
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -32,11 +33,30 @@ jobs:
       - name: Run Flask app in background
         run: |
           python app.py &
-
+    #Part 3: Run unit tests
       - name: run health check
         run: |
           sleep 5
           curl --fail http://localhost:5000/ || exit 1
 
-
+    #Part 4:Package the application
+      - name: Build Docker image
+        run: |
+          docker build -t entrytracker:latest .
           
+    #Part 5: Run end-to-end (E2E) tests
+      - name: Run docker compose
+        run: |
+          docker-compose up --build --abort-on-container-exit -d
+
+      - name: Run E2E tests
+        run: |
+          sleep 20
+          curl --fail http://localhost:5000/ || exit 1
+
+      - name: Stop E2E environment
+        if: always()
+        run: |
+          docker compose down
+
+        
